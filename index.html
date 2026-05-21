@@ -3,101 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Catálogo Minimalista</title>
+    <title>Catálogo Público</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <header>
-        <h1>STUDIO COLL.</h1>
-        <nav>
-            <a href="index.html" class="active">Catálogo</a>
-            <a href="admin.html">Admin</a>
-            <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">☀️ Modo Claro</button>
-        </nav>
+        <div class="brand-section">
+            <h1>STUDIO</h1>
+            <span class="brand-subtitle">Colección Actual</span>
+        </div>
+        <div class="header-icons">
+            <a href="index.html" style="color:var(--text-primary); text-decoration:none;">Catálogo</a>
+            <a href="admin.html" style="color:var(--text-muted); text-decoration:none;">Admin</a>
+            <span id="theme-btn" onclick="toggleTheme()">☀️</span>
+        </div>
     </header>
 
     <main>
         <section>
-            <h2>Colección Disponible</h2>
             <div id="catalog-grid" class="products-grid"></div>
         </section>
     </main>
 
     <script>
-        // Sistema de modo Claro / Oscuro
+        const PRODUCTS_KEY = "products_v3";
+
         function toggleTheme() {
             const html = document.documentElement;
             const btn = document.getElementById('theme-btn');
             if (html.getAttribute('data-theme') === 'dark') {
                 html.setAttribute('data-theme', 'light');
-                btn.innerText = '🌙 Modo Oscuro';
+                btn.innerText = '🌙';
             } else {
                 html.setAttribute('data-theme', 'dark');
-                btn.innerText = '☀️ Modo Claro';
+                btn.innerText = '☀️';
             }
         }
 
-        // Cargar Catálogo
         function loadCatalog() {
             const catalogGrid = document.getElementById('catalog-grid');
-            const products = JSON.parse(localStorage.getItem('products_v2')) || [];
+            const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+            
+            // FILTRO: Solo mostramos al público los que están marcados como "listos" en el admin
+            const products = allProducts.filter(p => p.status === 'listos');
 
             if (products.length === 0) {
-                catalogGrid.innerHTML = '<p style="color:var(--text-muted); font-style:italic;">No hay piezas disponibles en esta colección.</p>';
+                catalogGrid.innerHTML = '<p style="color:var(--text-muted); font-style:italic; grid-column: 1 / -1; padding: 40px 0;">La colección se está actualizando. Vuelve pronto.</p>';
                 return;
             }
 
             catalogGrid.innerHTML = '';
 
             products.forEach((product, pIndex) => {
-                // Calcular stock total
                 const totalStock = Object.values(product.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
-                
-                // Generar las opciones del selector de tallas filtrando solo las que tienen stock
+                const imgUrl = product.image && product.image.trim() !== '' ? product.image : 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500';
+
                 let sizeOptions = '';
                 for (const [size, qty] of Object.entries(product.stocks)) {
                     if (parseInt(qty) > 0) {
-                        sizeOptions += `<option value="${size}">${size} (${qty} disponibles)</option>`;
+                        sizeOptions += `<option value="${size}">${size} - Quedan ${qty}</option>`;
                     }
                 }
-
-                // Imagen por defecto si ponen el enlace vacío
-                const imgUrl = product.image.trim() !== '' ? product.image : 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500';
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
                     <div class="product-img-container">
+                        <div class="stock-badge" id="stock-display-${pIndex}">${totalStock > 0 ? 'En Stock' : 'Agotado'}</div>
                         <img src="${imgUrl}" alt="${product.name}" onerror="this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500'">
                     </div>
                     <div class="product-info">
-                        <div class="stock-badge" id="stock-display-${pIndex}">Disponibles: ${totalStock} uds.</div>
-                        <h3>${product.name}</h3>
+                        <div class="price-stock-summary" style="margin-bottom: 15px;">
+                            <span class="product-name">${product.name}</span>
+                            <span class="price">${product.price} €</span>
+                        </div>
                         
-                        <div class="size-selector">
-                            <label>Seleccionar Talla</label>
-                            <select class="size-select" onchange="updateStockText(this, ${pIndex}, ${JSON.stringify(product.stocks).replace(/"/g, '&quot;')})">
+                        <div style="margin-top: auto;">
+                            <label style="display:block; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; letter-spacing:1px;">Selecciona tu talla</label>
+                            <select class="size-select">
                                 ${sizeOptions !== '' ? sizeOptions : '<option value="">Agotado</option>'}
                             </select>
                         </div>
-
-                        <p class="product-desc">${product.description || 'Pieza de edición limitada.'}</p>
-                        <div class="price">${product.price} €</div>
                     </div>
                 `;
                 catalogGrid.appendChild(card);
             });
         }
 
-        // Cambiar el texto de "Disponibles" según la talla elegida en el selector
-        function updateStockText(selectElement, cardIndex, stocks) {
-            const selectedSize = selectElement.value;
-            const badge = document.getElementById(`stock-display-${cardIndex}`);
-            if(selectedSize) {
-                badge.innerText = `Disponibles en Talla ${selectedSize}: ${stocks[selectedSize]} uds.`;
+        // MAGIA EN TIEMPO REAL: Si el localStorage cambia desde la pestaña del Admin, recargamos el catálogo al instante.
+        window.addEventListener('storage', function(e) {
+            if (e.key === PRODUCTS_KEY) {
+                loadCatalog();
             }
-        }
+        });
 
         window.onload = loadCatalog;
     </script>
