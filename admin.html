@@ -37,8 +37,8 @@
                 </div>
             </div>
             <div class="header-icons">
-                <span id="theme-btn" onclick="toggleTheme()" title="Cambiar modo de color">☀️</span>
-                <span>👤 Perfil</span>
+                <span id="theme-btn" onclick="toggleTheme()" title="Cambiar modo de color" style="cursor:pointer;">☀️</span>
+                <span style="cursor:pointer;">👤 Perfil</span>
                 <button class="btn-exit" onclick="logout()">Salir</button>
             </div>
         </header>
@@ -64,8 +64,7 @@
                         <input type="number" id="new-size-qty" placeholder="Cantidad (10)">
                         <button class="btn-add-size" onclick="addSizeToForm()">+</button>
                     </div>
-                    <ul id="form-sizes-list" class="sizes-list">
-                        </ul>
+                    <ul id="form-sizes-list" class="sizes-list"></ul>
                     <p id="form-info-text" class="info-text">No has añadido tallas. Se creará como 'Talla Única'.</p>
                 </div>
 
@@ -77,17 +76,13 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Foto (URL)</label>
-                    <input type="text" id="prod-img" placeholder="https://ejemplo.com/foto.jpg">
-                    <p class="info-text">Pega la URL de la imagen. La vista previa es solo gráfica.</p>
-                </div>
-                <div class="photo-area">
-                    <span>🖼️</span>
-                    <span>Subir imagen</span>
+                <div class="form-group" style="margin-top: 25px;">
+                    <label>Foto (Subir PNG/JPG)</label>
+                    <input type="file" id="prod-file" accept="image/png, image/jpeg, image/webp" style="background: var(--header-color); cursor: pointer; padding: 10px;">
+                    <p class="info-text">⚠️ Usa fotos comprimidas (menos de 500kb) para evitar llenar la memoria del navegador.</p>
                 </div>
 
-                <button class="btn-save-product" style="margin-top: 30px;" onclick="saveProduct()">Guardar producto</button>
+                <button class="btn-save-product" style="margin-top: 20px;" onclick="saveProduct()">Guardar producto</button>
             </div>
 
             <div class="dashboard-panel product-list-panel">
@@ -115,10 +110,9 @@
 
     <script>
         const ADMIN_PASSWORD = "1234";
-        const PRODUCTS_KEY = "products_v3"; // NUEVA VERSIÓN DE DATOS
+        const PRODUCTS_KEY = "products_v3"; 
         const SHIPPING_KEY = "global_shipping_price";
 
-        // Tallas temporales del formulario
         let currentFormSizes = {}; 
         let currentProductStatus = 'listos';
         let currentProductListStatus = 'listos';
@@ -151,7 +145,6 @@
             }
         }
 
-        // --- GESTIÓN DINÁMICA DE TALLAS EN EL FORMULARIO ---
         function addSizeToForm() {
             const name = document.getElementById('new-size-name').value;
             const qty = document.getElementById('new-size-qty').value;
@@ -192,7 +185,6 @@
             });
         }
 
-        // --- ESTADO DEL PRODUCTO (LISTOS / LLEGAR) ---
         function setStatusTab(status) {
             currentProductStatus = status;
             document.getElementById('tab-listos').classList.remove('active');
@@ -200,27 +192,49 @@
             document.getElementById(`tab-${status}`).classList.add('active');
         }
 
-        // --- SISTEMA DE GUARDADO ---
+        // --- SISTEMA DE GUARDADO CON LECTURA DE ARCHIVOS ---
         function saveProduct() {
             const name = document.getElementById('prod-name').value;
-            const image = document.getElementById('prod-img').value;
             const price = document.getElementById('prod-price').value;
+            const fileInput = document.getElementById('prod-file');
 
             if (!name || !price) { alert('Nombre y Precio son obligatorios.'); return; }
 
-            // Si no hay tallas en el formulario, creamos "Talla Única"
-            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            
-            // Creamos una copia de las tallas actuales o "Talla Única" con stock 1
             const sizesFinal = Object.keys(currentFormSizes).length > 0 ? { ...currentFormSizes } : { "Talla Única": 1 };
 
-            const newProduct = { name, image, price, stocks: sizesFinal, status: currentProductStatus };
+            // Comprobamos si el usuario ha subido un archivo
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                
+                // Cuando termine de leer el archivo, lo guardamos
+                reader.onload = function(e) {
+                    const base64Image = e.target.result;
+                    finishSavingProduct(name, base64Image, price, sizesFinal, currentProductStatus);
+                };
+                reader.readAsDataURL(file); // Convierte la imagen a código texto
+            } else {
+                // Si no hay foto, guardamos el producto sin imagen
+                finishSavingProduct(name, '', price, sizesFinal, currentProductStatus);
+            }
+        }
+
+        function finishSavingProduct(name, imageBase64, price, stocks, status) {
+            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+            const newProduct = { name, image: imageBase64, price, stocks, status };
             products.push(newProduct);
-            localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+            
+            // Usamos try-catch por si la imagen es tan pesada que revienta el LocalStorage
+            try {
+                localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+            } catch (error) {
+                alert('❌ Error: La foto es demasiado pesada y la memoria gratuita está llena. Por favor, comprime la imagen e inténtalo de nuevo.');
+                return;
+            }
 
             // Limpiar formulario completo
             document.getElementById('prod-name').value = '';
-            document.getElementById('prod-img').value = '';
+            document.getElementById('prod-file').value = '';
             document.getElementById('prod-price').value = '';
             currentFormSizes = {};
             currentProductStatus = 'listos';
@@ -246,13 +260,12 @@
             renderProductList();
         }
 
-        // --- RENDERIZADO DE PRODUCTOS (LAS TARJETAS INTERACTIVAS) ---
+        // --- RENDERIZADO DE PRODUCTOS ---
         function renderProductList() {
             const grid = document.getElementById('admin-products-grid');
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             grid.innerHTML = '';
 
-            // Filtramos los productos según la pestaña activa en la lista
             const filteredProducts = products.filter(p => p.status === currentProductListStatus);
 
             if(filteredProducts.length === 0) {
@@ -261,18 +274,13 @@
             }
 
             filteredProducts.forEach((prod, pIndex) => {
-                // Calcular stock total
                 const totalStock = Object.values(prod.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
-                
-                // Imagen por defecto si la URL es inválida
                 const imgUrl = prod.image && prod.image.trim() !== '' ? prod.image : 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500';
 
-                // Determinar badge de stock color-coded
-                const lowStock = totalStock < 5; // Definir umbral de stock bajo
+                const lowStock = totalStock < 5;
                 const stockBadgeClass = lowStock ? 'low-stock' : '';
                 const stockText = totalStock > 0 ? `${totalStock} disp.` : 'Agotado';
 
-                // Generar filas de stock interactivas (- / +)
                 let stockRowsHtml = '';
                 for (const [size, qty] of Object.entries(prod.stocks)) {
                     stockRowsHtml += `
@@ -316,30 +324,22 @@
             });
         }
 
-        // --- INTERACTIVIDAD EN EL DASHBOARD: AJUSTE DE STOCK (-/+) ---
         function adjustStockInEditor(pIndex, size, adjustment) {
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             if(!products[pIndex] || !products[pIndex].stocks[size]) return;
-            
-            // Actualizamos stock y prevenimos negativos
             products[pIndex].stocks[size] = Math.max(0, parseInt(products[pIndex].stocks[size]) + adjustment);
-            
             localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
             loadDashboardData();
         }
 
-        // --- INTERACTIVIDAD EN EL DASHBOARD: CAMBIO DE ESTADO ---
         function changeStatusInEditor(pIndex) {
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             if(!products[pIndex]) return;
-            
             products[pIndex].status = products[pIndex].status === 'listos' ? 'llegar' : 'listos';
-            
             localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
             loadDashboardData();
         }
 
-        // --- INTERACTIVIDAD EN EL DASHBOARD: ELIMINAR ---
         function deleteProduct(pIndex) {
             if(confirm('¿Seguro que quieres eliminar este artículo?')) {
                 const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
@@ -349,19 +349,15 @@
             }
         }
 
-        // --- RESUMEN Y ENVÍO: CÁLCULO DE VALOR TOTAL ---
         function updateTotalValueAndShipping() {
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             const summaryValue = document.getElementById('summary-value');
             const shippingInput = document.getElementById('global-shipping-price');
 
-            // Cargar precio de envío guardado
             shippingInput.value = localStorage.getItem(SHIPPING_KEY) || '5.99';
 
-            // Sumar valor de inventario de productos 'Listos'
             const total = products.reduce((acc, p) => {
                 if(p.status === 'listos') {
-                    // Sumamos stock de todas las tallas
                     const totalQty = Object.values(p.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
                     return acc + (totalQty * parseFloat(p.price));
                 }
@@ -377,7 +373,6 @@
             alert('¡Precio de envío guardado!');
         }
 
-        // --- ACTUALIZAR CONTADORES DE PESTAÑAS (LISTOS / LLEGAR) ---
         function updateTabCounts() {
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             const listosCount = products.filter(p => p.status === 'listos').length;
