@@ -177,3 +177,40 @@ h2 { font-weight: 300; font-size: 1.6rem; margin-bottom: 30px; letter-spacing: -
 .shipping-form-group { width: 200px; }
 
 .hidden { display: none !important; }
+
+/* --- ADAPTACIÓN PARA MÓVILES (RESPONSIVE) --- */
+@media screen and (max-width: 768px) {
+    /* El catálogo y el panel de admin pasan a 1 sola columna */
+    .products-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    /* Reducimos márgenes y títulos para ganar espacio */
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .header-icons {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .dashboard-panel, .cart-panel {
+        padding: 15px;
+    }
+
+    /* El carrito lateral ocupa toda la pantalla en móvil */
+    .cart-panel {
+        max-width: 100%;
+        right: -100%; /* Para que se esconda del todo */
+    }
+
+    .form-group input, 
+    .form-group select {
+        font-size: 16px; /* Evita que el iPhone haga zoom automático al escribir */
+    }
+}
