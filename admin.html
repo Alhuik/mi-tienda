@@ -44,8 +44,8 @@
             </div>
         </header>
 
-        <main class="dashboard-grid">
-            <div class="dashboard-panel add-product-panel">
+        <main>
+            <div class="dashboard-panel add-product-panel" style="margin-bottom: 40px;">
                 <h2>Añadir producto</h2>
                 
                 <div class="form-group">
@@ -80,20 +80,19 @@
                 <div class="form-group" style="margin-top: 25px;">
                     <label>Foto (Subir PNG/JPG)</label>
                     <input type="file" id="prod-file" accept="image/png, image/jpeg, image/webp" style="background: var(--header-color); cursor: pointer; padding: 10px;">
-                    <p class="info-text">⚠️ Usa fotos comprimidas (menos de 500kb) para evitar llenar la memoria del navegador.</p>
                 </div>
 
                 <button class="btn-save-product" style="margin-top: 20px;" onclick="saveProduct()">Guardar producto</button>
             </div>
 
-            <div class="dashboard-panel product-list-panel">
+            <div class="dashboard-panel product-list-panel" style="margin-bottom: 40px;">
                 <div class="product-list-tabs">
                     <button id="pl-tab-listos" class="product-list-tab active" onclick="setProductListTab('listos')">Listos (0)</button>
                     <button id="pl-tab-llegar" class="product-list-tab" onclick="setProductListTab('llegar')">Por llegar (0)</button>
                 </div>
 
                 <div id="admin-products-grid" class="products-grid">
-                    </div>
+                </div>
             </div>
 
             <div class="dashboard-panel summary-panel">
@@ -103,14 +102,13 @@
                 </div>
                 <div class="shipping-form-group">
                     <label class="summary-label">Precio de envío (€)</label>
-                    <input type="number" id="global-shipping-price" placeholder="5.99" onchange="saveGlobalShipping()">
+                    <input type="number" id="global-shipping-price" placeholder="2.99" onchange="saveGlobalShipping()">
                 </div>
             </div>
         </main>
     </div>
 
     <script>
-        // NUEVA CONTRASEÑA ACTUALIZADA
         const ADMIN_PASSWORD = "Alhuik18213";
         const PRODUCTS_KEY = "products_v3"; 
         const SHIPPING_KEY = "global_shipping_price";
@@ -150,10 +148,7 @@
         function addSizeToForm() {
             const name = document.getElementById('new-size-name').value;
             const qty = document.getElementById('new-size-qty').value;
-
-            if(!name || !qty) { alert('Rellena Talla y Cantidad.'); return; }
-            if(qty < 0) { alert('La cantidad no puede ser negativa.'); return; }
-
+            if(!name || !qty) return;
             currentFormSizes[name] = qty;
             document.getElementById('new-size-name').value = '';
             document.getElementById('new-size-qty').value = '10';
@@ -169,7 +164,6 @@
             const list = document.getElementById('form-sizes-list');
             const infoText = document.getElementById('form-info-text');
             list.innerHTML = '';
-            
             const sizesArr = Object.entries(currentFormSizes);
             
             if(sizesArr.length === 0) {
@@ -206,10 +200,8 @@
             if (fileInput.files && fileInput.files[0]) {
                 const file = fileInput.files[0];
                 const reader = new FileReader();
-                
                 reader.onload = function(e) {
-                    const base64Image = e.target.result;
-                    finishSavingProduct(name, base64Image, price, sizesFinal, currentProductStatus);
+                    finishSavingProduct(name, e.target.result, price, sizesFinal, currentProductStatus);
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -219,14 +211,12 @@
 
         function finishSavingProduct(name, imageBase64, price, stocks, status) {
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            const newProduct = { name, image: imageBase64, price, stocks, status };
-            products.push(newProduct);
+            products.push({ name, image: imageBase64, price, stocks, status });
             
             try {
                 localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
             } catch (error) {
-                alert('❌ Error: La foto es demasiado pesada y la memoria gratuita está llena. Por favor, comprime la imagen e inténtalo de nuevo.');
-                return;
+                alert('❌ Error: La foto es demasiado pesada.'); return;
             }
 
             document.getElementById('prod-name').value = '';
@@ -236,7 +226,6 @@
             currentProductStatus = 'listos';
             updateFormSizesList();
             setStatusTab('listos');
-
             alert('¡Producto guardado!');
             loadDashboardData();
         }
@@ -259,21 +248,16 @@
             const grid = document.getElementById('admin-products-grid');
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             grid.innerHTML = '';
-
             const filteredProducts = products.filter(p => p.status === currentProductListStatus);
 
             if(filteredProducts.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1 / -1; color:var(--text-muted); text-align:center; padding: 40px;">No hay artículos.</p>';
+                grid.innerHTML = '<p style="color:var(--text-muted);">No hay artículos.</p>';
                 return;
             }
 
             filteredProducts.forEach((prod, pIndex) => {
                 const totalStock = Object.values(prod.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
                 const imgUrl = prod.image && prod.image.trim() !== '' ? prod.image : 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500';
-
-                const lowStock = totalStock < 5;
-                const stockBadgeClass = lowStock ? 'low-stock' : '';
-                const stockText = totalStock > 0 ? `${totalStock} disp.` : 'Agotado';
 
                 let stockRowsHtml = '';
                 for (const [size, qty] of Object.entries(prod.stocks)) {
@@ -285,35 +269,30 @@
                                 <span>${qty}</span>
                                 <button class="btn-stock-adjust" onclick="adjustStockInEditor(${pIndex}, '${size}', 1)">+</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 }
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
                     <div class="product-img-container">
-                        <div class="stock-badge ${stockBadgeClass}">${stockText}</div>
-                        <img src="${imgUrl}" alt="${prod.name}" onerror="this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500'">
+                        <div class="stock-badge ${totalStock < 5 ? 'low-stock' : ''}">${totalStock > 0 ? `${totalStock} disp.` : 'Agotado'}</div>
+                        <img src="${imgUrl}">
                     </div>
                     <div class="product-info">
                         <div class="price-stock-summary">
                             <span class="product-name">${prod.name}</span>
                             <span class="price">${prod.price} €</span>
                         </div>
-                        
                         <div class="stock-control-group">
                             <div class="stock-control-header">CONTROL DE EXISTENCIAS</div>
                             ${stockRowsHtml}
                         </div>
-
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <div style="display:flex; gap: 10px; margin-bottom:15px;">
                             <button class="btn-status" onclick="changeStatusInEditor(${pIndex})">${prod.status === 'listos' ? '➡ Por llegar' : '➡ Listos'}</button>
+                            <button class="btn-delete-icon" onclick="deleteProduct(${pIndex})">Borrar</button>
                         </div>
-                        
-                        <button class="btn-delete-icon" onclick="deleteProduct(${pIndex})">Borrar</button>
-                    </div>
-                `;
+                    </div>`;
                 grid.appendChild(card);
             });
         }
@@ -328,7 +307,6 @@
 
         function changeStatusInEditor(pIndex) {
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            if(!products[pIndex]) return;
             products[pIndex].status = products[pIndex].status === 'listos' ? 'llegar' : 'listos';
             localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
             loadDashboardData();
@@ -345,35 +323,20 @@
 
         function updateTotalValueAndShipping() {
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            const summaryValue = document.getElementById('summary-value');
-            const shippingInput = document.getElementById('global-shipping-price');
-
-            shippingInput.value = localStorage.getItem(SHIPPING_KEY) || '5.99';
-
-            const total = products.reduce((acc, p) => {
-                if(p.status === 'listos') {
-                    const totalQty = Object.values(p.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
-                    return acc + (totalQty * parseFloat(p.price));
-                }
-                return acc;
-            }, 0);
-
-            summaryValue.innerText = `Valor inventario (listos): ${total.toFixed(2)} €`;
+            document.getElementById('global-shipping-price').value = localStorage.getItem(SHIPPING_KEY) || '2.99';
+            const total = products.reduce((acc, p) => p.status === 'listos' ? acc + (Object.values(p.stocks).reduce((a, b) => a + parseInt(b||0), 0) * parseFloat(p.price)) : acc, 0);
+            document.getElementById('summary-value').innerText = `Valor inventario (listos): ${total.toFixed(2)} €`;
         }
 
         function saveGlobalShipping() {
-            const shippingValue = document.getElementById('global-shipping-price').value;
-            localStorage.setItem(SHIPPING_KEY, shippingValue);
+            localStorage.setItem(SHIPPING_KEY, document.getElementById('global-shipping-price').value);
             alert('¡Precio de envío guardado!');
         }
 
         function updateTabCounts() {
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            const listosCount = products.filter(p => p.status === 'listos').length;
-            const llegarCount = products.filter(p => p.status === 'llegar').length;
-            
-            document.getElementById('pl-tab-listos').innerText = `Listos (${listosCount})`;
-            document.getElementById('pl-tab-llegar').innerText = `Por llegar (${llegarCount})`;
+            document.getElementById('pl-tab-listos').innerText = `Listos (${products.filter(p => p.status === 'listos').length})`;
+            document.getElementById('pl-tab-llegar').innerText = `Por llegar (${products.filter(p => p.status === 'llegar').length})`;
         }
     </script>
 </body>
