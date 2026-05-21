@@ -86,7 +86,7 @@
     <script>
         const PRODUCTS_KEY = "products_v3";
         const SHIPPING_KEY = "global_shipping_price";
-        let wishlist = []; // Aquí guardaremos los productos del pedido
+        let wishlist = []; 
 
         function toggleTheme() {
             const html = document.documentElement;
@@ -120,16 +120,17 @@
                 const totalStock = Object.values(product.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
                 const imgUrl = product.image && product.image.trim() !== '' ? product.image : 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500';
 
+                // AQUÍ AÑADIMOS EL NÚMERO DE STOCK POR TALLA EN EL DESPLEGABLE
                 let sizeOptions = '';
                 for (const [size, qty] of Object.entries(product.stocks)) {
-                    if (parseInt(qty) > 0) sizeOptions += `<option value="${size}">${size}</option>`;
+                    if (parseInt(qty) > 0) sizeOptions += `<option value="${size}">${size} (${qty} disp.)</option>`;
                 }
 
                 const card = document.createElement('div');
                 card.className = 'product-card';
                 card.innerHTML = `
                     <div class="product-img-container">
-                        <div class="stock-badge" id="stock-display-${pIndex}">${totalStock > 0 ? 'En Stock' : 'Agotado'}</div>
+                        <div class="stock-badge" id="stock-display-${pIndex}">${totalStock > 0 ? totalStock + ' en stock' : 'Agotado'}</div>
                         <img src="${imgUrl}" alt="${product.name}">
                     </div>
                     <div class="product-info">
@@ -150,7 +151,6 @@
             });
         }
 
-        // --- FUNCIONES DEL CARRITO ---
         function addToCart(pIndex) {
             const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             const products = allProducts.filter(p => p.status === 'listos');
@@ -172,11 +172,10 @@
 
             updateCartUI();
             
-            // Efecto visual: abrimos el carrito medio segundo para que vea que se añadió
             const cartPanel = document.getElementById('cart-sidebar');
             if(!cartPanel.classList.contains('open')) {
                 toggleCart();
-                setTimeout(() => toggleCart(), 2000); // Se cierra solo a los 2 segundos
+                setTimeout(() => toggleCart(), 2000); 
             }
         }
 
@@ -215,7 +214,6 @@
                 container.appendChild(itemDiv);
             });
 
-            // Calculamos con el envío configurado en el Admin (por defecto 2.99 si no hay nada guardado)
             const shippingPrice = parseFloat(localStorage.getItem(SHIPPING_KEY)) || 2.99;
             const total = subtotal + shippingPrice;
 
@@ -224,10 +222,9 @@
             document.getElementById('cart-total').innerText = `${total.toFixed(2)} €`;
         }
 
-        // Actualiza el catálogo en tiempo real si haces cambios en el admin
         window.addEventListener('storage', function(e) {
             if (e.key === PRODUCTS_KEY) loadCatalog();
-            if (e.key === SHIPPING_KEY) updateCartUI(); // Si cambias el precio de envío, se actualiza el carrito
+            if (e.key === SHIPPING_KEY) updateCartUI(); 
         });
 
         window.onload = function() {
