@@ -1,29 +1,15 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración</title>
+    <title>Admin Panel</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Estilos específicos para el formulario de administración */
-        .admin-box { background: white; max-width: 500px; margin: 30px auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; display: flex; flex-direction: column; }
-        .form-group label { margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select, .form-group textarea { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
-        button { background-color: #00adb5; color: white; border: none; padding: 12px; border-radius: 4px; font-size: 1rem; cursor: pointer; font-weight: bold; width: 100%; }
-        button:hover { background-color: #008087; }
-        .hidden { display: none !important; }
-        .product-manager-list { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
-        .admin-product-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px; margin-bottom: 10px; border-radius: 4px; }
-        .btn-delete { background-color: #ff4d4d; width: auto; padding: 5px 10px; font-size: 0.9rem; }
-        .btn-delete:hover { background-color: #cc0000; }
-    </style>
 </head>
 <body>
 
     <header>
-        <h1>⚙️ Panel de Control</h1>
+        <h1>STUDIO COLL. / ADMIN</h1>
         <nav>
             <a href="index.html">Catálogo</a>
             <a href="admin.html" class="active">Admin</a>
@@ -32,54 +18,60 @@
 
     <main>
         <div id="login-section" class="admin-box">
-            <h2>🔐 Iniciar Sesión</h2>
+            <h2>🔐 Acceso Privado</h2>
             <div class="form-group">
-                <label for="password">Introduce la contraseña de administrador:</label>
-                <input type="password" id="password" placeholder="Tu contraseña aquí...">
+                <label>Contraseña de acceso</label>
+                <input type="password" id="password" placeholder="••••">
             </div>
-            <button onclick="checkPassword()">Entrar al Panel</button>
-            <p id="login-error" style="color: red; margin-top: 10px; display: none;">❌ Contraseña incorrecta</p>
+            <button class="btn-primary" onclick="checkPassword()">Entrar</button>
+            <p id="login-error" style="color: #ff4d4d; margin-top: 15px; display: none; font-size:0.9rem;">Contraseña incorrecta.</p>
         </div>
 
         <div id="admin-section" class="admin-box hidden">
-            <h2>✨ Añadir Nuevo Artículo</h2>
+            <h2>Añadir Nueva Prenda</h2>
+            
             <div class="form-group">
-                <label for="prod-name">Nombre del artículo (Ej: Camiseta Anime):</label>
-                <input type="text" id="prod-name" placeholder="Nombre...">
+                <label>Nombre de la prenda</label>
+                <input type="text" id="prod-name" placeholder="Ej: Camiseta Oversize Negra">
             </div>
-            <div class="form-group">
-                <label for="prod-price">Precio (€):</label>
-                <input type="number" id="prod-price" placeholder="Precio en euros...">
-            </div>
-            <div class="form-group">
-                <label for="prod-size">Talla disponible:</label>
-                <select id="prod-size">
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="prod-desc">Descripción (Opcional):</label>
-                <textarea id="prod-desc" rows="3" placeholder="Detalles de la prenda..."></textarea>
-            </div>
-            <button onclick="saveProduct()">Guardar en el Catálogo</button>
 
-            <div class="product-manager-list">
-                <h3>Tus artículos actuales:</h3>
-                <div id="admin-products-grid"></div>
+            <div class="form-group">
+                <label>Enlace de la Foto (URL)</label>
+                <input type="text" id="prod-img" placeholder="https://ejemplo.com/foto.jpg">
+            </div>
+
+            <div class="form-group">
+                <label>Precio (€)</label>
+                <input type="number" id="prod-price" placeholder="29.99">
+            </div>
+
+            <div class="form-group">
+                <label>Descripción Corta</label>
+                <textarea id="prod-desc" rows="2" placeholder="Materiales, corte..."></textarea>
+            </div>
+
+            <div class="sizes-stock-container">
+                <label style="display:block; margin-bottom:10px; font-weight:600;">Inventario por Tallas:</label>
+                <div class="size-row"><span>Talla S:</span> <input type="number" id="stock-S" value="0" min="0"></div>
+                <div class="size-row"><span>Talla M:</span> <input type="number" id="stock-M" value="0" min="0"></div>
+                <div class="size-row"><span>Talla L:</span> <input type="number" id="stock-L" value="0" min="0"></div>
+                <div class="size-row"><span>Talla XL:</span> <input type="number" id="stock-XL" value="0" min="0"></div>
+            </div>
+
+            <button class="btn-primary" onclick="saveProduct()">Publicar en Catálogo</button>
+
+            <div style="margin-top: 40px;">
+                <h3>Inventario Actual</h3>
+                <div id="admin-products-grid" style="margin-top:15px;"></div>
             </div>
         </div>
     </main>
 
     <script>
-        // CONFIGURACIÓN: Tu contraseña para entrar será "1234" (puedes cambiarla aquí abajo)
         const ADMIN_PASSWORD = "1234";
 
         function checkPassword() {
-            const inputPass = document.getElementById('password').value;
-            if (inputPass === ADMIN_PASSWORD) {
+            if (document.getElementById('password').value === ADMIN_PASSWORD) {
                 document.getElementById('login-section').classList.add('hidden');
                 document.getElementById('admin-section').classList.remove('hidden');
                 showAdminProducts();
@@ -90,38 +82,49 @@
 
         function saveProduct() {
             const name = document.getElementById('prod-name').value;
+            const image = document.getElementById('prod-img').value;
             const price = document.getElementById('prod-price').value;
-            const size = document.getElementById('prod-size').value;
             const description = document.getElementById('prod-desc').value;
 
+            // Recoger los stocks de todas las tallas
+            const stocks = {
+                S: document.getElementById('stock-S').value || 0,
+                M: document.getElementById('stock-M').value || 0,
+                L: document.getElementById('stock-L').value || 0,
+                XL: document.getElementById('stock-XL').value || 0
+            };
+
             if (!name || !price) {
-                alert('Por favor, rellena al menos el nombre y el precio.');
+                alert('Pon al menos el nombre y el precio.');
                 return;
             }
 
-            const newProduct = { name, price, size, description };
-            
-            // Cargar productos actuales, sumar el nuevo y volver a guardar
-            const products = JSON.parse(localStorage.getItem('products')) || [];
+            const newProduct = { name, image, price, description, stocks };
+            const products = JSON.parse(localStorage.getItem('products_v2')) || [];
             products.push(newProduct);
-            localStorage.setItem('products', JSON.stringify(products));
+            localStorage.setItem('products_v2', JSON.stringify(products));
 
-            // Limpiar el formulario y avisar
+            // Limpiar formulario
             document.getElementById('prod-name').value = '';
+            document.getElementById('prod-img').value = '';
             document.getElementById('prod-price').value = '';
             document.getElementById('prod-desc').value = '';
-            alert('¡Artículo guardado con éxito!');
-            
+            document.getElementById('stock-S').value = '0';
+            document.getElementById('stock-M').value = '0';
+            document.getElementById('stock-L').value = '0';
+            document.getElementById('stock-XL').value = '0';
+
+            alert('¡Publicado con éxito!');
             showAdminProducts();
         }
 
         function showAdminProducts() {
             const grid = document.getElementById('admin-products-grid');
-            const products = JSON.parse(localStorage.getItem('products')) || [];
+            const products = JSON.parse(localStorage.getItem('products_v2')) || [];
             grid.innerHTML = '';
 
             if(products.length === 0) {
-                grid.innerHTML = '<p style="color:#777; font-style:italic;">No hay artículos guardados.</p>';
+                grid.innerHTML = '<p style="color:var(--text-muted); font-style:italic;">No hay artículos.</p>';
                 return;
             }
 
@@ -129,18 +132,18 @@
                 const item = document.createElement('div');
                 item.className = 'admin-product-item';
                 item.innerHTML = `
-                    <span><strong>${prod.name}</strong> - ${prod.price}€ (Talla ${prod.size})</span>
-                    <button class="btn-delete" onclick="deleteProduct(${index})">Eliminar</button>
+                    <span><strong>${prod.name}</strong> - ${prod.price}€</span>
+                    <button class="btn-delete" onclick="deleteProduct(${index})">Borrar</button>
                 `;
                 grid.appendChild(item);
             });
         }
 
         function deleteProduct(index) {
-            if(confirm('¿Seguro que quieres eliminar este artículo?')) {
-                const products = JSON.parse(localStorage.getItem('products')) || [];
+            if(confirm('¿Eliminar artículo?')) {
+                const products = JSON.parse(localStorage.getItem('products_v2')) || [];
                 products.splice(index, 1);
-                localStorage.setItem('products', JSON.stringify(products));
+                localStorage.setItem('products_v2', JSON.stringify(products));
                 showAdminProducts();
             }
         }
