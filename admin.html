@@ -43,7 +43,7 @@
             </div>
         </header>
 
-        <main>
+        <main class="dashboard-grid">
             <div class="dashboard-panel add-product-panel">
                 <h2>Añadir producto</h2>
                 
@@ -192,7 +192,6 @@
             document.getElementById(`tab-${status}`).classList.add('active');
         }
 
-        // --- SISTEMA DE GUARDADO CON LECTURA DE ARCHIVOS ---
         function saveProduct() {
             const name = document.getElementById('prod-name').value;
             const price = document.getElementById('prod-price').value;
@@ -202,19 +201,16 @@
 
             const sizesFinal = Object.keys(currentFormSizes).length > 0 ? { ...currentFormSizes } : { "Talla Única": 1 };
 
-            // Comprobamos si el usuario ha subido un archivo
             if (fileInput.files && fileInput.files[0]) {
                 const file = fileInput.files[0];
                 const reader = new FileReader();
                 
-                // Cuando termine de leer el archivo, lo guardamos
                 reader.onload = function(e) {
                     const base64Image = e.target.result;
                     finishSavingProduct(name, base64Image, price, sizesFinal, currentProductStatus);
                 };
-                reader.readAsDataURL(file); // Convierte la imagen a código texto
+                reader.readAsDataURL(file);
             } else {
-                // Si no hay foto, guardamos el producto sin imagen
                 finishSavingProduct(name, '', price, sizesFinal, currentProductStatus);
             }
         }
@@ -224,7 +220,6 @@
             const newProduct = { name, image: imageBase64, price, stocks, status };
             products.push(newProduct);
             
-            // Usamos try-catch por si la imagen es tan pesada que revienta el LocalStorage
             try {
                 localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
             } catch (error) {
@@ -232,7 +227,6 @@
                 return;
             }
 
-            // Limpiar formulario completo
             document.getElementById('prod-name').value = '';
             document.getElementById('prod-file').value = '';
             document.getElementById('prod-price').value = '';
@@ -245,7 +239,6 @@
             loadDashboardData();
         }
 
-        // --- CARGA DE DATOS DEL DASHBOARD ---
         function loadDashboardData() {
             renderProductList();
             updateTotalValueAndShipping();
@@ -260,7 +253,6 @@
             renderProductList();
         }
 
-        // --- RENDERIZADO DE PRODUCTOS ---
         function renderProductList() {
             const grid = document.getElementById('admin-products-grid');
             const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
