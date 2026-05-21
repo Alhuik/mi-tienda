@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Tienda - Catálogo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>👕 Mi Catálogo de Ropa</h1>
+        <nav>
+            <a href="index.html" class="active">Catálogo</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="catalog-container">
+            <h2>Artículos Disponibles</h2>
+            <div id="catalog-grid" class="products-grid"></div>
+        </section>
+    </main>
+
+    <script>
+        // Función para cargar y mostrar los productos en el catálogo
+        function loadCatalog() {
+            const catalogGrid = document.getElementById('catalog-grid');
+            // Obtenemos los productos guardados en el navegador (o una lista vacía si no hay)
+            const products = JSON.parse(localStorage.getItem('products')) || [];
+
+            if (products.length === 0) {
+                catalogGrid.innerHTML = '<p class="no-products">Aún no hay artículos en el catálogo. Entra al panel de Admin para añadir el primero.</p>';
+                return;
+            }
+
+            catalogGrid.innerHTML = ''; // Limpiar catálogo antes de pintar
+
+            products.forEach(product => {
+                const productCard = document.createElement('div');
+                productCard.className = 'product-card';
+                
+                productCard.innerHTML = `
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <p class="price">${product.price}€</p>
+                        <p class="size"><strong>Talla:</strong> ${product.size}</p>
+                        <p class="description">${product.description || 'Sin descripción'}</p>
+                    </div>
+                `;
+                catalogGrid.appendChild(productCard);
+            });
+        }
+
+        // Ejecutar la función cuando cargue la página
+        window.onload = loadCatalog;
+    </script>
+</body>
+</html>
