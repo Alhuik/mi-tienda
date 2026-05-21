@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Profesional - Mi Catálogo</title>
+    <title>Dashboard Profesional - FieldFlex</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
             <header style="background: none; border: none; padding: 0; justify-content: center; margin-bottom: 30px;">
                 <div class="brand-section">
                     <span style="font-size:1.8rem;">⚙️</span>
-                    <h1 style="font-weight:400; font-size:1.6rem; color: var(--text-primary);">Dashboard Pro</h1>
+                    <h1 style="font-weight:400; font-size:1.6rem; color: var(--text-primary);">FieldFlex Pro</h1>
                 </div>
             </header>
             
@@ -32,11 +32,12 @@
             <div class="brand-section">
                 <span style="font-size:1.8rem;">⚙️</span>
                 <div>
-                    <h1>Mi Catálogo</h1>
+                    <h1>FieldFlex</h1>
                     <p class="brand-subtitle">Gestiona productos, existencias por tallas y envíos.</p>
                 </div>
             </div>
             <div class="header-icons">
+                <a href="index.html" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem; letter-spacing: 0.5px;" onmouseover="this.style.color='var(--text-primary)'" onmouseout="this.style.color='var(--text-muted)'">Volver al Catálogo</a>
                 <span id="theme-btn" onclick="toggleTheme()" title="Cambiar modo de color" style="cursor:pointer;">☀️</span>
                 <span style="cursor:pointer;">👤 Perfil</span>
                 <button class="btn-exit" onclick="logout()">Salir</button>
@@ -109,7 +110,8 @@
     </div>
 
     <script>
-        const ADMIN_PASSWORD = "1234";
+        // NUEVA CONTRASEÑA ACTUALIZADA
+        const ADMIN_PASSWORD = "Alhuik18213";
         const PRODUCTS_KEY = "products_v3"; 
         const SHIPPING_KEY = "global_shipping_price";
 
