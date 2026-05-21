@@ -3,149 +3,388 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
+    <title>Dashboard Profesional - Mi Catálogo</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <h1>STUDIO COLL. / ADMIN</h1>
-        <nav>
-            <a href="index.html">Catálogo</a>
-            <a href="admin.html" class="active">Admin</a>
-        </nav>
-    </header>
-
-    <main>
-        <div id="login-section" class="admin-box">
-            <h2>🔐 Acceso Privado</h2>
-            <div class="form-group">
-                <label>Contraseña de acceso</label>
+    <main id="login-screen" style="display: flex; justify-content: center; align-items: center; height: 100vh; grid-template-columns: none;">
+        <div class="dashboard-panel" style="width: 100%; max-width: 400px; text-align: center; background: var(--header-color);">
+            <header style="background: none; border: none; padding: 0; justify-content: center; margin-bottom: 30px;">
+                <div class="brand-section">
+                    <span style="font-size:1.8rem;">⚙️</span>
+                    <h1 style="font-weight:400; font-size:1.6rem; color: var(--text-primary);">Dashboard Pro</h1>
+                </div>
+            </header>
+            
+            <h2 style="font-weight: 300; font-size: 1.3rem; margin-bottom: 25px; color: var(--text-primary);">🔐 Acceso Privado</h2>
+            <div class="form-group" style="text-align: left;">
+                <label style="color: var(--text-primary);">Contraseña de acceso</label>
                 <input type="password" id="password" placeholder="••••">
             </div>
-            <button class="btn-primary" onclick="checkPassword()">Entrar</button>
-            <p id="login-error" style="color: #ff4d4d; margin-top: 15px; display: none; font-size:0.9rem;">Contraseña incorrecta.</p>
-        </div>
-
-        <div id="admin-section" class="admin-box hidden">
-            <h2>Añadir Nueva Prenda</h2>
-            
-            <div class="form-group">
-                <label>Nombre de la prenda</label>
-                <input type="text" id="prod-name" placeholder="Ej: Camiseta Oversize Negra">
-            </div>
-
-            <div class="form-group">
-                <label>Enlace de la Foto (URL)</label>
-                <input type="text" id="prod-img" placeholder="https://ejemplo.com/foto.jpg">
-            </div>
-
-            <div class="form-group">
-                <label>Precio (€)</label>
-                <input type="number" id="prod-price" placeholder="29.99">
-            </div>
-
-            <div class="form-group">
-                <label>Descripción Corta</label>
-                <textarea id="prod-desc" rows="2" placeholder="Materiales, corte..."></textarea>
-            </div>
-
-            <div class="sizes-stock-container">
-                <label style="display:block; margin-bottom:10px; font-weight:600;">Inventario por Tallas:</label>
-                <div class="size-row"><span>Talla S:</span> <input type="number" id="stock-S" value="0" min="0"></div>
-                <div class="size-row"><span>Talla M:</span> <input type="number" id="stock-M" value="0" min="0"></div>
-                <div class="size-row"><span>Talla L:</span> <input type="number" id="stock-L" value="0" min="0"></div>
-                <div class="size-row"><span>Talla XL:</span> <input type="number" id="stock-XL" value="0" min="0"></div>
-            </div>
-
-            <button class="btn-primary" onclick="saveProduct()">Publicar en Catálogo</button>
-
-            <div style="margin-top: 40px;">
-                <h3>Inventario Actual</h3>
-                <div id="admin-products-grid" style="margin-top:15px;"></div>
-            </div>
+            <button class="btn-save-product" onclick="checkPassword()" style="margin-top: 10px; margin-bottom: 20px;">Entrar al Sistema</button>
+            <p id="login-error" style="color: var(--badge-red); font-size: 0.9rem; display: none;">Contraseña incorrecta.</p>
         </div>
     </main>
 
+    <div id="main-screen" class="hidden">
+        <header>
+            <div class="brand-section">
+                <span style="font-size:1.8rem;">⚙️</span>
+                <div>
+                    <h1>Mi Catálogo</h1>
+                    <p class="brand-subtitle">Gestiona productos, existencias por tallas y envíos.</p>
+                </div>
+            </div>
+            <div class="header-icons">
+                <span id="theme-btn" onclick="toggleTheme()" title="Cambiar modo de color">☀️</span>
+                <span>👤 Perfil</span>
+                <button class="btn-exit" onclick="logout()">Salir</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="dashboard-panel add-product-panel">
+                <h2>Añadir producto</h2>
+                
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="prod-name" placeholder="Camiseta básica o zapatillas">
+                </div>
+
+                <div class="form-group">
+                    <label>Precio (€)</label>
+                    <input type="number" id="prod-price" placeholder="19.99">
+                </div>
+
+                <div class="size-inventory-form">
+                    <h3>INVENTARIO POR TALLAS</h3>
+                    <div class="size-input-row">
+                        <input type="text" id="new-size-name" placeholder="Talla (S, M, 42...)">
+                        <input type="number" id="new-size-qty" placeholder="Cantidad (10)">
+                        <button class="btn-add-size" onclick="addSizeToForm()">+</button>
+                    </div>
+                    <ul id="form-sizes-list" class="sizes-list">
+                        </ul>
+                    <p id="form-info-text" class="info-text">No has añadido tallas. Se creará como 'Talla Única'.</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Estado</label>
+                    <div class="status-tabs">
+                        <div id="tab-listos" class="status-tab active" onclick="setStatusTab('listos')">Listos</div>
+                        <div id="tab-llegar" class="status-tab" onclick="setStatusTab('llegar')">Por llegar</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Foto (URL)</label>
+                    <input type="text" id="prod-img" placeholder="https://ejemplo.com/foto.jpg">
+                    <p class="info-text">Pega la URL de la imagen. La vista previa es solo gráfica.</p>
+                </div>
+                <div class="photo-area">
+                    <span>🖼️</span>
+                    <span>Subir imagen</span>
+                </div>
+
+                <button class="btn-save-product" style="margin-top: 30px;" onclick="saveProduct()">Guardar producto</button>
+            </div>
+
+            <div class="dashboard-panel product-list-panel">
+                <div class="product-list-tabs">
+                    <button id="pl-tab-listos" class="product-list-tab active" onclick="setProductListTab('listos')">Listos (0)</button>
+                    <button id="pl-tab-llegar" class="product-list-tab" onclick="setProductListTab('llegar')">Por llegar (0)</button>
+                </div>
+
+                <div id="admin-products-grid" class="products-grid">
+                    </div>
+            </div>
+
+            <div class="dashboard-panel summary-panel">
+                <div class="summary-group">
+                    <span class="summary-label">Resumen y envío</span>
+                    <span class="summary-value" id="summary-value">Valor inventario (listos): 0.00 €</span>
+                </div>
+                <div class="shipping-form-group">
+                    <label class="summary-label">Precio de envío (€)</label>
+                    <input type="number" id="global-shipping-price" placeholder="5.99" onchange="saveGlobalShipping()">
+                </div>
+            </div>
+        </main>
+    </div>
+
     <script>
         const ADMIN_PASSWORD = "1234";
+        const PRODUCTS_KEY = "products_v3"; // NUEVA VERSIÓN DE DATOS
+        const SHIPPING_KEY = "global_shipping_price";
+
+        // Tallas temporales del formulario
+        let currentFormSizes = {}; 
+        let currentProductStatus = 'listos';
+        let currentProductListStatus = 'listos';
 
         function checkPassword() {
             if (document.getElementById('password').value === ADMIN_PASSWORD) {
-                document.getElementById('login-section').classList.add('hidden');
-                document.getElementById('admin-section').classList.remove('hidden');
-                showAdminProducts();
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('main-screen').classList.remove('hidden');
+                loadDashboardData();
             } else {
                 document.getElementById('login-error').style.display = 'block';
             }
         }
 
+        function logout() {
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('password').value = '';
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('theme-btn');
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                btn.innerText = '🌙';
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                btn.innerText = '☀️';
+            }
+        }
+
+        // --- GESTIÓN DINÁMICA DE TALLAS EN EL FORMULARIO ---
+        function addSizeToForm() {
+            const name = document.getElementById('new-size-name').value;
+            const qty = document.getElementById('new-size-qty').value;
+
+            if(!name || !qty) { alert('Rellena Talla y Cantidad.'); return; }
+            if(qty < 0) { alert('La cantidad no puede ser negativa.'); return; }
+
+            currentFormSizes[name] = qty;
+            document.getElementById('new-size-name').value = '';
+            document.getElementById('new-size-qty').value = '10';
+            updateFormSizesList();
+        }
+
+        function removeSizeFromForm(name) {
+            delete currentFormSizes[name];
+            updateFormSizesList();
+        }
+
+        function updateFormSizesList() {
+            const list = document.getElementById('form-sizes-list');
+            const infoText = document.getElementById('form-info-text');
+            list.innerHTML = '';
+            
+            const sizesArr = Object.entries(currentFormSizes);
+            
+            if(sizesArr.length === 0) {
+                infoText.style.display = 'block';
+                return;
+            } else {
+                infoText.style.display = 'none';
+            }
+
+            sizesArr.forEach(([name, qty]) => {
+                const item = document.createElement('li');
+                item.style.marginBottom = '5px';
+                item.innerHTML = `<strong>${name}:</strong> ${qty} uds. <span style="color:var(--badge-red); cursor:pointer; margin-left:10px;" onclick="removeSizeFromForm('${name}')">✕</span>`;
+                list.appendChild(item);
+            });
+        }
+
+        // --- ESTADO DEL PRODUCTO (LISTOS / LLEGAR) ---
+        function setStatusTab(status) {
+            currentProductStatus = status;
+            document.getElementById('tab-listos').classList.remove('active');
+            document.getElementById('tab-llegar').classList.remove('active');
+            document.getElementById(`tab-${status}`).classList.add('active');
+        }
+
+        // --- SISTEMA DE GUARDADO ---
         function saveProduct() {
             const name = document.getElementById('prod-name').value;
             const image = document.getElementById('prod-img').value;
             const price = document.getElementById('prod-price').value;
-            const description = document.getElementById('prod-desc').value;
 
-            // Recoger los stocks de todas las tallas
-            const stocks = {
-                S: document.getElementById('stock-S').value || 0,
-                M: document.getElementById('stock-M').value || 0,
-                L: document.getElementById('stock-L').value || 0,
-                XL: document.getElementById('stock-XL').value || 0
-            };
+            if (!name || !price) { alert('Nombre y Precio son obligatorios.'); return; }
 
-            if (!name || !price) {
-                alert('Pon al menos el nombre y el precio.');
-                return;
-            }
+            // Si no hay tallas en el formulario, creamos "Talla Única"
+            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+            
+            // Creamos una copia de las tallas actuales o "Talla Única" con stock 1
+            const sizesFinal = Object.keys(currentFormSizes).length > 0 ? { ...currentFormSizes } : { "Talla Única": 1 };
 
-            const newProduct = { name, image, price, description, stocks };
-            const products = JSON.parse(localStorage.getItem('products_v2')) || [];
+            const newProduct = { name, image, price, stocks: sizesFinal, status: currentProductStatus };
             products.push(newProduct);
-            localStorage.setItem('products_v2', JSON.stringify(products));
+            localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
 
-            // Limpiar formulario
+            // Limpiar formulario completo
             document.getElementById('prod-name').value = '';
             document.getElementById('prod-img').value = '';
             document.getElementById('prod-price').value = '';
-            document.getElementById('prod-desc').value = '';
-            document.getElementById('stock-S').value = '0';
-            document.getElementById('stock-M').value = '0';
-            document.getElementById('stock-L').value = '0';
-            document.getElementById('stock-XL').value = '0';
+            currentFormSizes = {};
+            currentProductStatus = 'listos';
+            updateFormSizesList();
+            setStatusTab('listos');
 
-            alert('¡Publicado con éxito!');
-            showAdminProducts();
+            alert('¡Producto guardado!');
+            loadDashboardData();
         }
 
-        function showAdminProducts() {
+        // --- CARGA DE DATOS DEL DASHBOARD ---
+        function loadDashboardData() {
+            renderProductList();
+            updateTotalValueAndShipping();
+            updateTabCounts();
+        }
+
+        function setProductListTab(status) {
+            currentProductListStatus = status;
+            document.getElementById('pl-tab-listos').classList.remove('active');
+            document.getElementById('pl-tab-llegar').classList.remove('active');
+            document.getElementById(`pl-tab-${status}`).classList.add('active');
+            renderProductList();
+        }
+
+        // --- RENDERIZADO DE PRODUCTOS (LAS TARJETAS INTERACTIVAS) ---
+        function renderProductList() {
             const grid = document.getElementById('admin-products-grid');
-            const products = JSON.parse(localStorage.getItem('products_v2')) || [];
+            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             grid.innerHTML = '';
 
-            if(products.length === 0) {
-                grid.innerHTML = '<p style="color:var(--text-muted); font-style:italic;">No hay artículos.</p>';
+            // Filtramos los productos según la pestaña activa en la lista
+            const filteredProducts = products.filter(p => p.status === currentProductListStatus);
+
+            if(filteredProducts.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1 / -1; color:var(--text-muted); text-align:center; padding: 40px;">No hay artículos.</p>';
                 return;
             }
 
-            products.forEach((prod, index) => {
-                const item = document.createElement('div');
-                item.className = 'admin-product-item';
-                item.innerHTML = `
-                    <span><strong>${prod.name}</strong> - ${prod.price}€</span>
-                    <button class="btn-delete" onclick="deleteProduct(${index})">Borrar</button>
+            filteredProducts.forEach((prod, pIndex) => {
+                // Calcular stock total
+                const totalStock = Object.values(prod.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
+                
+                // Imagen por defecto si la URL es inválida
+                const imgUrl = prod.image && prod.image.trim() !== '' ? prod.image : 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500';
+
+                // Determinar badge de stock color-coded
+                const lowStock = totalStock < 5; // Definir umbral de stock bajo
+                const stockBadgeClass = lowStock ? 'low-stock' : '';
+                const stockText = totalStock > 0 ? `${totalStock} disp.` : 'Agotado';
+
+                // Generar filas de stock interactivas (- / +)
+                let stockRowsHtml = '';
+                for (const [size, qty] of Object.entries(prod.stocks)) {
+                    stockRowsHtml += `
+                        <div class="stock-row">
+                            <span>${size}:</span>
+                            <div class="stock-picker">
+                                <button class="btn-stock-adjust" onclick="adjustStockInEditor(${pIndex}, '${size}', -1)">-</button>
+                                <span>${qty}</span>
+                                <button class="btn-stock-adjust" onclick="adjustStockInEditor(${pIndex}, '${size}', 1)">+</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-img-container">
+                        <div class="stock-badge ${stockBadgeClass}">${stockText}</div>
+                        <img src="${imgUrl}" alt="${prod.name}" onerror="this.src='https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500'">
+                    </div>
+                    <div class="product-info">
+                        <div class="price-stock-summary">
+                            <span class="product-name">${prod.name}</span>
+                            <span class="price">${prod.price} €</span>
+                        </div>
+                        
+                        <div class="stock-control-group">
+                            <div class="stock-control-header">CONTROL DE EXISTENCIAS</div>
+                            ${stockRowsHtml}
+                        </div>
+
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                            <button class="btn-status" onclick="changeStatusInEditor(${pIndex})">${prod.status === 'listos' ? '➡ Por llegar' : '➡ Listos'}</button>
+                        </div>
+                        
+                        <button class="btn-delete-icon" onclick="deleteProduct(${pIndex})">Borrar</button>
+                    </div>
                 `;
-                grid.appendChild(item);
+                grid.appendChild(card);
             });
         }
 
-        function deleteProduct(index) {
-            if(confirm('¿Eliminar artículo?')) {
-                const products = JSON.parse(localStorage.getItem('products_v2')) || [];
-                products.splice(index, 1);
-                localStorage.setItem('products_v2', JSON.stringify(products));
-                showAdminProducts();
+        // --- INTERACTIVIDAD EN EL DASHBOARD: AJUSTE DE STOCK (-/+) ---
+        function adjustStockInEditor(pIndex, size, adjustment) {
+            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+            if(!products[pIndex] || !products[pIndex].stocks[size]) return;
+            
+            // Actualizamos stock y prevenimos negativos
+            products[pIndex].stocks[size] = Math.max(0, parseInt(products[pIndex].stocks[size]) + adjustment);
+            
+            localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+            loadDashboardData();
+        }
+
+        // --- INTERACTIVIDAD EN EL DASHBOARD: CAMBIO DE ESTADO ---
+        function changeStatusInEditor(pIndex) {
+            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+            if(!products[pIndex]) return;
+            
+            products[pIndex].status = products[pIndex].status === 'listos' ? 'llegar' : 'listos';
+            
+            localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+            loadDashboardData();
+        }
+
+        // --- INTERACTIVIDAD EN EL DASHBOARD: ELIMINAR ---
+        function deleteProduct(pIndex) {
+            if(confirm('¿Seguro que quieres eliminar este artículo?')) {
+                const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+                products.splice(pIndex, 1);
+                localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+                loadDashboardData();
             }
+        }
+
+        // --- RESUMEN Y ENVÍO: CÁLCULO DE VALOR TOTAL ---
+        function updateTotalValueAndShipping() {
+            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+            const summaryValue = document.getElementById('summary-value');
+            const shippingInput = document.getElementById('global-shipping-price');
+
+            // Cargar precio de envío guardado
+            shippingInput.value = localStorage.getItem(SHIPPING_KEY) || '5.99';
+
+            // Sumar valor de inventario de productos 'Listos'
+            const total = products.reduce((acc, p) => {
+                if(p.status === 'listos') {
+                    // Sumamos stock de todas las tallas
+                    const totalQty = Object.values(p.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
+                    return acc + (totalQty * parseFloat(p.price));
+                }
+                return acc;
+            }, 0);
+
+            summaryValue.innerText = `Valor inventario (listos): ${total.toFixed(2)} €`;
+        }
+
+        function saveGlobalShipping() {
+            const shippingValue = document.getElementById('global-shipping-price').value;
+            localStorage.setItem(SHIPPING_KEY, shippingValue);
+            alert('¡Precio de envío guardado!');
+        }
+
+        // --- ACTUALIZAR CONTADORES DE PESTAÑAS (LISTOS / LLEGAR) ---
+        function updateTabCounts() {
+            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
+            const listosCount = products.filter(p => p.status === 'listos').length;
+            const llegarCount = products.filter(p => p.status === 'llegar').length;
+            
+            document.getElementById('pl-tab-listos').innerText = `Listos (${listosCount})`;
+            document.getElementById('pl-tab-llegar').innerText = `Por llegar (${llegarCount})`;
         }
     </script>
 </body>
