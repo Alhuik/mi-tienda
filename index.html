@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FieldFlex - Colección Actual</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        /* Estilos específicos para el carrito */
         .cart-panel {
             position: fixed; top: 0; right: -400px; width: 100%; max-width: 400px; height: 100vh;
             background: var(--card-bg); border-left: 1px solid var(--border-color);
@@ -84,9 +85,35 @@
     </div>
 
     <script>
-        const PRODUCTS_KEY = "products_v3";
-        const SHIPPING_KEY = "global_shipping_price";
+        // TUS CLAVES DE FIREBASE DE FIELDFLEX
+        const firebaseConfig = {
+            apiKey: "AIzaSyA74KuExBxomsqX8ZqM42WVNJNGeqCPYNY",
+            authDomain: "fieldflex-store.firebaseapp.com",
+            databaseURL: "https://fieldflex-store-default-rtdb.firebaseio.com",
+            projectId: "fieldflex-store",
+            storageBucket: "fieldflex-store.firebasestorage.app",
+            messagingSenderId: "66283609545",
+            appId: "1:66283609545:web:2d63cea4490b14db331c18"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let allProducts = [];
+        let currentShipping = 2.99;
         let wishlist = []; 
+
+        window.onload = function() {
+            db.ref('fieldflex/products').on('value', snapshot => {
+                allProducts = snapshot.val() || [];
+                loadCatalog();
+            });
+
+            db.ref('fieldflex/shipping').on('value', snapshot => {
+                currentShipping = snapshot.val() || 2.99;
+                updateCartUI();
+            });
+        };
 
         function toggleTheme() {
             const html = document.documentElement;
@@ -106,21 +133,20 @@
 
         function loadCatalog() {
             const catalogGrid = document.getElementById('catalog-grid');
-            const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            const products = allProducts.filter(p => p.status === 'listos');
+            const listosProducts = allProducts.filter(p => p.status === 'listos');
 
-            if (products.length === 0) {
+            if (listosProducts.length === 0) {
                 catalogGrid.innerHTML = '<p style="color:var(--text-muted); grid-column: 1 / -1; padding: 40px 0;">La colección se está actualizando. Vuelve pronto.</p>';
                 return;
             }
 
             catalogGrid.innerHTML = '';
 
-            products.forEach((product, pIndex) => {
+            listosProducts.forEach((product) => {
+                const realIndex = allProducts.indexOf(product); 
                 const totalStock = Object.values(product.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
                 const imgUrl = product.image && product.image.trim() !== '' ? product.image : 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500';
 
-                // AQUÍ AÑADIMOS EL NÚMERO DE STOCK POR TALLA EN EL DESPLEGABLE
                 let sizeOptions = '';
                 for (const [size, qty] of Object.entries(product.stocks)) {
                     if (parseInt(qty) > 0) sizeOptions += `<option value="${size}">${size} (${qty} disp.)</option>`;
@@ -130,7 +156,7 @@
                 card.className = 'product-card';
                 card.innerHTML = `
                     <div class="product-img-container">
-                        <div class="stock-badge" id="stock-display-${pIndex}">${totalStock > 0 ? totalStock + ' en stock' : 'Agotado'}</div>
+                        <div class="stock-badge">${totalStock > 0 ? totalStock + ' en stock' : 'Agotado'}</div>
                         <img src="${imgUrl}" alt="${product.name}">
                     </div>
                     <div class="product-info">
@@ -140,10 +166,10 @@
                         </div>
                         
                         <div style="margin-top: auto;">
-                            <select class="size-select" id="size-select-${pIndex}">
+                            <select class="size-select" id="size-select-${realIndex}">
                                 ${sizeOptions !== '' ? sizeOptions : '<option value="">Agotado</option>'}
                             </select>
-                            <button class="btn-add-cart" onclick="addToCart(${pIndex})">Añadir al pedido</button>
+                            <button class="btn-add-cart" onclick="addToCart(${realIndex})">Añadir al pedido</button>
                         </div>
                     </div>
                 `;
@@ -152,10 +178,7 @@
         }
 
         function addToCart(pIndex) {
-            const allProducts = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            const products = allProducts.filter(p => p.status === 'listos');
-            const product = products[pIndex];
-            
+            const product = allProducts[pIndex];
             const sizeSelect = document.getElementById(`size-select-${pIndex}`);
             const selectedSize = sizeSelect.value;
 
@@ -214,23 +237,12 @@
                 container.appendChild(itemDiv);
             });
 
-            const shippingPrice = parseFloat(localStorage.getItem(SHIPPING_KEY)) || 2.99;
-            const total = subtotal + shippingPrice;
+            const total = subtotal + currentShipping;
 
             document.getElementById('cart-subtotal').innerText = `${subtotal.toFixed(2)} €`;
-            document.getElementById('cart-shipping').innerText = `${shippingPrice.toFixed(2)} €`;
+            document.getElementById('cart-shipping').innerText = `${currentShipping.toFixed(2)} €`;
             document.getElementById('cart-total').innerText = `${total.toFixed(2)} €`;
         }
-
-        window.addEventListener('storage', function(e) {
-            if (e.key === PRODUCTS_KEY) loadCatalog();
-            if (e.key === SHIPPING_KEY) updateCartUI(); 
-        });
-
-        window.onload = function() {
-            loadCatalog();
-            updateCartUI();
-        };
     </script>
 </body>
 </html>
