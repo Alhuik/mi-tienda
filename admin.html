@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Profesional - FieldFlex</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
@@ -102,7 +104,8 @@
                 </div>
                 <div class="shipping-form-group">
                     <label class="summary-label">Precio de envío (€)</label>
-                    <input type="number" id="global-shipping-price" placeholder="2.99" onchange="saveGlobalShipping()">
+                    <input type="number" id="global-shipping-price" placeholder="2.99">
+                    <button class="btn-add-size" style="width:auto; padding:0 15px; border-radius:var(--radius); font-size:0.9rem;" onclick="saveGlobalShipping()">Guardar</button>
                 </div>
             </div>
         </main>
@@ -110,9 +113,24 @@
 
     <script>
         const ADMIN_PASSWORD = "Alhuik18213";
-        const PRODUCTS_KEY = "products_v3"; 
-        const SHIPPING_KEY = "global_shipping_price";
 
+        // TUS CLAVES DE FIREBASE DE FIELDFLEX
+        const firebaseConfig = {
+            apiKey: "AIzaSyA74KuExBxomsqX8ZqM42WVNJNGeqCPYNY",
+            authDomain: "fieldflex-store.firebaseapp.com",
+            databaseURL: "https://fieldflex-store-default-rtdb.firebaseio.com",
+            projectId: "fieldflex-store",
+            storageBucket: "fieldflex-store.firebasestorage.app",
+            messagingSenderId: "66283609545",
+            appId: "1:66283609545:web:2d63cea4490b14db331c18"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let allProducts = [];
+        let currentShipping = 2.99;
+        
         let currentFormSizes = {}; 
         let currentProductStatus = 'listos';
         let currentProductListStatus = 'listos';
@@ -121,7 +139,19 @@
             if (document.getElementById('password').value === ADMIN_PASSWORD) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-screen').classList.remove('hidden');
-                loadDashboardData();
+
+                // CONECTAR A LA BASE DE DATOS
+                db.ref('fieldflex/products').on('value', snapshot => {
+                    allProducts = snapshot.val() || [];
+                    loadDashboardData();
+                });
+
+                db.ref('fieldflex/shipping').on('value', snapshot => {
+                    currentShipping = snapshot.val() || 2.99;
+                    document.getElementById('global-shipping-price').value = currentShipping;
+                    updateTotalValueAndShipping();
+                });
+
             } else {
                 document.getElementById('login-error').style.display = 'block';
             }
@@ -210,24 +240,18 @@
         }
 
         function finishSavingProduct(name, imageBase64, price, stocks, status) {
-            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            products.push({ name, image: imageBase64, price, stocks, status });
+            allProducts.push({ name, image: imageBase64, price, stocks, status });
             
-            try {
-                localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-            } catch (error) {
-                alert('❌ Error: La foto es demasiado pesada.'); return;
-            }
-
-            document.getElementById('prod-name').value = '';
-            document.getElementById('prod-file').value = '';
-            document.getElementById('prod-price').value = '';
-            currentFormSizes = {};
-            currentProductStatus = 'listos';
-            updateFormSizesList();
-            setStatusTab('listos');
-            alert('¡Producto guardado!');
-            loadDashboardData();
+            db.ref('fieldflex/products').set(allProducts).then(() => {
+                document.getElementById('prod-name').value = '';
+                document.getElementById('prod-file').value = '';
+                document.getElementById('prod-price').value = '';
+                currentFormSizes = {};
+                currentProductStatus = 'listos';
+                updateFormSizesList();
+                setStatusTab('listos');
+                alert('¡Producto guardado en la nube!');
+            }).catch(error => alert('❌ Error: La foto pesa demasiado para subirla. Comprímela más o usa una imagen de menos calidad.'));
         }
 
         function loadDashboardData() {
@@ -246,9 +270,8 @@
 
         function renderProductList() {
             const grid = document.getElementById('admin-products-grid');
-            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
             grid.innerHTML = '';
-            const filteredProducts = products.filter(p => p.status === currentProductListStatus);
+            const filteredProducts = allProducts.filter(p => p.status === currentProductListStatus);
 
             if(filteredProducts.length === 0) {
                 grid.innerHTML = '<p style="color:var(--text-muted);">No hay artículos.</p>';
@@ -256,6 +279,7 @@
             }
 
             filteredProducts.forEach((prod, pIndex) => {
+                const realIndex = allProducts.indexOf(prod);
                 const totalStock = Object.values(prod.stocks).reduce((a, b) => a + parseInt(b || 0), 0);
                 const imgUrl = prod.image && prod.image.trim() !== '' ? prod.image : 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500';
 
@@ -265,9 +289,9 @@
                         <div class="stock-row">
                             <span>${size}:</span>
                             <div class="stock-picker">
-                                <button class="btn-stock-adjust" onclick="adjustStockInEditor(${pIndex}, '${size}', -1)">-</button>
+                                <button class="btn-stock-adjust" onclick="adjustStockInEditor(${realIndex}, '${size}', -1)">-</button>
                                 <span>${qty}</span>
-                                <button class="btn-stock-adjust" onclick="adjustStockInEditor(${pIndex}, '${size}', 1)">+</button>
+                                <button class="btn-stock-adjust" onclick="adjustStockInEditor(${realIndex}, '${size}', 1)">+</button>
                             </div>
                         </div>`;
                 }
@@ -289,8 +313,8 @@
                             ${stockRowsHtml}
                         </div>
                         <div style="display:flex; gap: 10px; margin-bottom:15px;">
-                            <button class="btn-status" onclick="changeStatusInEditor(${pIndex})">${prod.status === 'listos' ? '➡ Por llegar' : '➡ Listos'}</button>
-                            <button class="btn-delete-icon" onclick="deleteProduct(${pIndex})">Borrar</button>
+                            <button class="btn-status" onclick="changeStatusInEditor(${realIndex})">${prod.status === 'listos' ? '➡ Por llegar' : '➡ Listos'}</button>
+                            <button class="btn-delete-icon" onclick="deleteProduct(${realIndex})">Borrar</button>
                         </div>
                     </div>`;
                 grid.appendChild(card);
@@ -298,45 +322,38 @@
         }
 
         function adjustStockInEditor(pIndex, size, adjustment) {
-            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            if(!products[pIndex] || !products[pIndex].stocks[size]) return;
-            products[pIndex].stocks[size] = Math.max(0, parseInt(products[pIndex].stocks[size]) + adjustment);
-            localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-            loadDashboardData();
+            if(!allProducts[pIndex] || !allProducts[pIndex].stocks[size]) return;
+            allProducts[pIndex].stocks[size] = Math.max(0, parseInt(allProducts[pIndex].stocks[size]) + adjustment);
+            db.ref('fieldflex/products').set(allProducts); 
         }
 
         function changeStatusInEditor(pIndex) {
-            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            products[pIndex].status = products[pIndex].status === 'listos' ? 'llegar' : 'listos';
-            localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-            loadDashboardData();
+            allProducts[pIndex].status = allProducts[pIndex].status === 'listos' ? 'llegar' : 'listos';
+            db.ref('fieldflex/products').set(allProducts);
         }
 
         function deleteProduct(pIndex) {
             if(confirm('¿Seguro que quieres eliminar este artículo?')) {
-                const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-                products.splice(pIndex, 1);
-                localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
-                loadDashboardData();
+                allProducts.splice(pIndex, 1);
+                db.ref('fieldflex/products').set(allProducts);
             }
         }
 
         function updateTotalValueAndShipping() {
-            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            document.getElementById('global-shipping-price').value = localStorage.getItem(SHIPPING_KEY) || '2.99';
-            const total = products.reduce((acc, p) => p.status === 'listos' ? acc + (Object.values(p.stocks).reduce((a, b) => a + parseInt(b||0), 0) * parseFloat(p.price)) : acc, 0);
+            const total = allProducts.reduce((acc, p) => p.status === 'listos' ? acc + (Object.values(p.stocks).reduce((a, b) => a + parseInt(b||0), 0) * parseFloat(p.price)) : acc, 0);
             document.getElementById('summary-value').innerText = `Valor inventario (listos): ${total.toFixed(2)} €`;
         }
 
         function saveGlobalShipping() {
-            localStorage.setItem(SHIPPING_KEY, document.getElementById('global-shipping-price').value);
-            alert('¡Precio de envío guardado!');
+            const newPrice = parseFloat(document.getElementById('global-shipping-price').value) || 2.99;
+            db.ref('fieldflex/shipping').set(newPrice).then(() => {
+                alert('¡Precio de envío guardado en la nube!');
+            });
         }
 
         function updateTabCounts() {
-            const products = JSON.parse(localStorage.getItem(PRODUCTS_KEY)) || [];
-            document.getElementById('pl-tab-listos').innerText = `Listos (${products.filter(p => p.status === 'listos').length})`;
-            document.getElementById('pl-tab-llegar').innerText = `Por llegar (${products.filter(p => p.status === 'llegar').length})`;
+            document.getElementById('pl-tab-listos').innerText = `Listos (${allProducts.filter(p => p.status === 'listos').length})`;
+            document.getElementById('pl-tab-llegar').innerText = `Por llegar (${allProducts.filter(p => p.status === 'llegar').length})`;
         }
     </script>
 </body>
